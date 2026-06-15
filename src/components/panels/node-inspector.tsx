@@ -3,13 +3,17 @@ import {
   AlertTriangle,
   CheckCircle2,
   CircleOff,
-  Cpu,
   Database,
   HardDrive,
   Layers3,
   MapPin,
+  MemoryStick,
+  Server,
   ServerCog,
+  Settings,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { useId, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +22,12 @@ import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { clamp, cn } from "@/lib/utils";
+import {
+  getResourceDefinition,
+  parseResourceInput,
+  resourceDefinitions,
+  type ResourceMetric,
+} from "@/lib/service-resources";
 import { useGraphBuilderStore } from "@/store/use-graph-builder-store";
 import type {
   InspectorTab,
@@ -56,6 +66,13 @@ const statusMeta: Record<
   },
 };
 
+const resourceIcons: Record<ResourceMetric, LucideIcon> = {
+  cpu: Settings,
+  memoryGb: MemoryStick,
+  diskGb: HardDrive,
+  replicas: Server,
+};
+
 export function NodeInspector({
   selectedNode,
   onUpdateNode,
@@ -71,15 +88,15 @@ export function NodeInspector({
     return (
       <section className="flex min-h-0 flex-1 flex-col p-4">
         <h2 className="text-base font-semibold text-foreground">
-          Node Inspector
+          Inspector
         </h2>
         <div className="mt-4 flex flex-1 flex-col items-center justify-center rounded-md border border-dashed border-border bg-muted/20 p-6 text-center">
           <ServerCog className="mb-3 size-8 text-muted-foreground" />
           <p className="text-sm font-medium text-foreground">
-            Select a service node
+            Select a graph item
           </p>
           <p className="mt-1 max-w-56 text-xs text-muted-foreground">
-            Click a node on the canvas to inspect and edit its configuration.
+            Nodes and wires can be edited from this panel.
           </p>
         </div>
       </section>
@@ -89,11 +106,6 @@ export function NodeInspector({
   const { data } = selectedNode;
   const meta = statusMeta[data.status];
   const StatusIcon = meta.icon;
-  const cpuValue = clamp(Math.round(data.cpu), 0, 100);
-
-  function updateCpu(value: number) {
-    onUpdateNode({ cpu: clamp(Math.round(value), 0, 100) });
-  }
 
   return (
     <section className="min-h-0 flex-1 overflow-y-auto p-4">
@@ -145,35 +157,7 @@ export function NodeInspector({
             />
           </div>
 
-          <div className="rounded-md border border-border bg-muted/20 p-3">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <Label htmlFor="cpu-input" className="flex items-center gap-2">
-                <Cpu className="size-4 text-muted-foreground" />
-                CPU allocation
-              </Label>
-              <span className="text-xs text-muted-foreground">0-100</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Slider
-                value={[cpuValue]}
-                min={0}
-                max={100}
-                step={1}
-                onValueChange={([value]) => updateCpu(value)}
-                aria-label="CPU allocation"
-              />
-              <Input
-                id="cpu-input"
-                className="w-20 shrink-0 text-right"
-                type="number"
-                inputMode="numeric"
-                min={0}
-                max={100}
-                value={cpuValue}
-                onChange={(event) => updateCpu(Number(event.target.value))}
-              />
-            </div>
-          </div>
+          <ResourceEditor data={data} onUpdateNode={onUpdateNode} />
         </TabsContent>
 
         <TabsContent value="runtime" className="space-y-4">
@@ -237,6 +221,88 @@ export function NodeInspector({
         </TabsContent>
       </Tabs>
     </section>
+  );
+}
+
+type ResourceEditorProps = {
+  data: ServiceNodeData;
+  onUpdateNode: (patch: Partial<ServiceNodeData>) => void;
+};
+
+function ResourceEditor({ data, onUpdateNode }: ResourceEditorProps) {
+  const inputId = useId();
+  const [activeMetric, setActiveMetric] = useState<ResourceMetric>("cpu");
+  const definition = getResourceDefinition(activeMetric);
+  const currentValue = definition.getValue(data);
+  const inputMode = definition.step < 1 ? "decimal" : "numeric";
+  const Icon = resourceIcons[definition.key];
+
+  function updateMetric(value: number) {
+    onUpdateNode(definition.toPatch(value));
+  }
+
+  return (
+    <div className="rounded-md border border-border bg-muted/20 p-3">
+      <Tabs
+        value={activeMetric}
+        onValueChange={(value) => setActiveMetric(value as ResourceMetric)}
+      >
+        <TabsList className="grid h-auto w-full grid-cols-4 gap-2 bg-transparent p-0">
+          {resourceDefinitions.map((resource) => {
+            const ResourceIcon = resourceIcons[resource.key];
+
+            return (
+              <TabsTrigger
+                key={resource.key}
+                value={resource.key}
+                className="h-14 min-w-0 gap-1 rounded-md bg-muted px-1 text-xs data-[state=active]:bg-background"
+              >
+                <ResourceIcon
+                  className="size-4 shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                <span className="truncate">{resource.label}</span>
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
+
+        <div className="mt-4">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <Label htmlFor={inputId} className="flex items-center gap-2">
+              <Icon className="size-4 text-muted-foreground" aria-hidden="true" />
+              {definition.inputLabel}
+            </Label>
+            <span className="text-xs text-muted-foreground">
+              {definition.min}-{definition.max}
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <Slider
+              value={[clamp(currentValue, definition.min, definition.max)]}
+              min={definition.min}
+              max={definition.max}
+              step={definition.step}
+              onValueChange={([value]) => updateMetric(value)}
+              aria-label={definition.inputLabel}
+            />
+            <Input
+              id={inputId}
+              className="w-24 shrink-0 text-right"
+              type="text"
+              inputMode={inputMode}
+              value={currentValue}
+              onChange={(event) =>
+                updateMetric(parseResourceInput(event.target.value, definition))
+              }
+            />
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Current {definition.label}: {definition.formatValue(currentValue)}
+          </p>
+        </div>
+      </Tabs>
+    </div>
   );
 }
 

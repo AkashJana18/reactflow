@@ -4,11 +4,14 @@ import {
   Github,
   Layers3,
   Network,
-  Server,
   TableProperties,
 } from "lucide-react";
+import type { ComponentType, SVGProps } from "react";
+import { PostgresLogo, RedisLogo } from "@/components/icons/service-logos";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+
+type ToolIcon = ComponentType<SVGProps<SVGSVGElement>>;
 
 const toolItems = [
   {
@@ -19,13 +22,13 @@ const toolItems = [
   },
   {
     label: "Postgres",
-    icon: Database,
+    icon: PostgresLogo,
     active: false,
     className: "text-sky-300",
   },
   {
     label: "Redis",
-    icon: Server,
+    icon: RedisLogo,
     active: false,
     className: "text-red-300",
   },
@@ -59,7 +62,12 @@ const toolItems = [
     active: false,
     className: "text-violet-300",
   },
-];
+] satisfies Array<{
+  label: string;
+  icon: ToolIcon;
+  active: boolean;
+  className: string;
+}>;
 
 export function LeftRail() {
   return (
@@ -84,7 +92,7 @@ export function LeftRail() {
                 "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground",
             )}
           >
-            <item.icon className="size-5" aria-hidden="true" />
+            <item.icon className="size-7" aria-hidden="true" />
           </Button>
         ))}
       </nav>

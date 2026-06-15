@@ -8,8 +8,10 @@ import {
   useReactFlow,
   type NodeTypes,
   type OnConnect,
+  type OnEdgesDelete,
   type OnEdgesChange,
   type OnNodesChange,
+  type OnReconnect,
   type ReactFlowInstance,
 } from "@xyflow/react";
 import { RefreshCw } from "lucide-react";
@@ -31,9 +33,11 @@ type GraphCanvasProps = {
   onNodesChange: OnNodesChange<ServiceNode>;
   onEdgesChange: OnEdgesChange<ServiceEdge>;
   onConnect: OnConnect;
+  onReconnect: OnReconnect<ServiceEdge>;
   onInit: (instance: ReactFlowInstance<ServiceNode, ServiceEdge>) => void;
-  onNodeSelect: (nodeId: string | null) => void;
+  onSelectionChange: (nodeId: string | null, edgeId: string | null) => void;
   onNodesDelete: (nodes: ServiceNode[]) => void;
+  onEdgesDelete: OnEdgesDelete<ServiceEdge>;
   onRetry: () => void;
 };
 
@@ -46,9 +50,11 @@ export function GraphCanvas({
   onNodesChange,
   onEdgesChange,
   onConnect,
+  onReconnect,
   onInit,
-  onNodeSelect,
+  onSelectionChange,
   onNodesDelete,
+  onEdgesDelete,
   onRetry,
 }: GraphCanvasProps) {
   const reactFlow = useReactFlow<ServiceNode, ServiceEdge>();
@@ -70,14 +76,22 @@ export function GraphCanvas({
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onReconnect={onReconnect}
         onInit={onInit}
-        onNodeClick={(_, node) => onNodeSelect(node.id)}
-        onPaneClick={() => onNodeSelect(null)}
-        onSelectionChange={({ nodes: selectedNodes }) =>
-          onNodeSelect(selectedNodes[0]?.id ?? null)
+        onNodeClick={(_, node) => onSelectionChange(node.id, null)}
+        onEdgeClick={(_, edge) => onSelectionChange(null, edge.id)}
+        onPaneClick={() => onSelectionChange(null, null)}
+        onSelectionChange={({ nodes: selectedNodes, edges: selectedEdges }) =>
+          onSelectionChange(
+            selectedNodes[0]?.id ?? null,
+            selectedEdges[0]?.id ?? null,
+          )
         }
         onNodesDelete={onNodesDelete}
+        onEdgesDelete={onEdgesDelete}
         deleteKeyCode={["Backspace", "Delete"]}
+        edgesReconnectable
+        reconnectRadius={12}
         fitView
         fitViewOptions={{ padding: 0.2 }}
         minZoom={0.35}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   addEdge,
+  reconnectEdge,
   useEdgesState,
   useNodesState,
   type Connection,
@@ -9,27 +10,13 @@ import {
 import { GraphCanvas } from "@/components/canvas/graph-canvas";
 import { LeftRail } from "@/components/layout/left-rail";
 import { TopBar } from "@/components/layout/top-bar";
+import { AddNodeDialog } from "@/components/panels/add-node-dialog";
 import { RightPanel } from "@/components/panels/right-panel";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useAppGraph } from "@/hooks/use-app-graph";
 import { useApps } from "@/hooks/use-apps";
 import { useGraphBuilderStore } from "@/store/use-graph-builder-store";
 import type { ServiceEdge, ServiceNode, ServiceNodeData } from "@/types";
-
-const newNodeDefaults: ServiceNodeData = {
-  name: "New Service",
-  description: "New service node added from the graph builder.",
-  status: "Healthy",
-  cpu: 25,
-  memoryGb: 0.5,
-  diskGb: 10,
-  replicas: 1,
-  runtimeVersion: "Node 22",
-  region: "us-east-1",
-  provider: "AWS",
-  kind: "api",
-  costPerHour: 0.03,
-};
 
 function isMobileViewport() {
   return window.matchMedia("(max-width: 1023px)").matches;
@@ -62,6 +49,8 @@ export function GraphBuilder() {
   const [edges, setEdges, onEdgesChange] = useEdgesState<ServiceEdge>([]);
   const [reactFlowInstance, setReactFlowInstance] =
     useState<ReactFlowInstance<ServiceNode, ServiceEdge> | null>(null);
+  const [isAddNodeDialogOpen, setAddNodeDialogOpen] = useState(false);
+  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const loadedAppId = useRef<string | null>(null);
 
   useEffect(() => {
@@ -74,6 +63,7 @@ export function GraphBuilder() {
     if (selectedAppId !== loadedAppId.current) {
       setNodes([]);
       setEdges([]);
+      setSelectedEdgeId(null);
     }
   }, [selectedAppId, setEdges, setNodes]);
 
@@ -82,6 +72,7 @@ export function GraphBuilder() {
       setNodes(graphQuery.data.nodes);
       setEdges(graphQuery.data.edges);
       setSelectedNodeId(null);
+      setSelectedEdgeId(null);
       loadedAppId.current = selectedAppId;
     }
   }, [
@@ -98,6 +89,18 @@ export function GraphBuilder() {
     }
   }, [nodes, selectedNodeId, setSelectedNodeId]);
 
+  useEffect(() => {
+    if (selectedNodeId) {
+      setSelectedEdgeId(null);
+    }
+  }, [selectedNodeId]);
+
+  useEffect(() => {
+    if (selectedEdgeId && !edges.some((edge) => edge.id === selectedEdgeId)) {
+      setSelectedEdgeId(null);
+    }
+  }, [edges, selectedEdgeId]);
+
   const selectedApp = useMemo(
     () => appsQuery.data?.find((app) => app.id === selectedAppId),
     [appsQuery.data, selectedAppId],
@@ -108,10 +111,16 @@ export function GraphBuilder() {
     [nodes, selectedNodeId],
   );
 
-  const handleNodeSelect = useCallback(
-    (nodeId: string | null) => {
+  const selectedEdge = useMemo(
+    () => edges.find((edge) => edge.id === selectedEdgeId) ?? null,
+    [edges, selectedEdgeId],
+  );
+
+  const handleSelectionChange = useCallback(
+    (nodeId: string | null, edgeId: string | null) => {
       setSelectedNodeId(nodeId);
-      if (nodeId && isMobileViewport()) {
+      setSelectedEdgeId(nodeId ? null : edgeId);
+      if ((nodeId || edgeId) && isMobileViewport()) {
         setMobilePanelOpen(true);
       }
     },
@@ -135,6 +144,27 @@ export function GraphBuilder() {
     [selectedNodeId, setNodes],
   );
 
+  const handleUpdateSelectedEdge = useCallback(
+    (patch: Partial<ServiceEdge>) => {
+      if (!selectedEdgeId) {
+        return;
+      }
+
+      setEdges((currentEdges) =>
+        currentEdges.map((edge) =>
+          edge.id === selectedEdgeId
+            ? {
+                ...edge,
+                ...patch,
+                data: patch.data ? { ...edge.data, ...patch.data } : edge.data,
+              }
+            : edge,
+        ),
+      );
+    },
+    [selectedEdgeId, setEdges],
+  );
+
   const handleConnect = useCallback(
     (connection: Connection) => {
       setEdges((currentEdges) =>
@@ -152,6 +182,19 @@ export function GraphBuilder() {
     [setEdges],
   );
 
+  const handleReconnect = useCallback(
+    (oldEdge: ServiceEdge, newConnection: Connection) => {
+      setEdges((currentEdges) =>
+        reconnectEdge(oldEdge, newConnection, currentEdges, {
+          shouldReplaceId: false,
+        }),
+      );
+      setSelectedEdgeId(oldEdge.id);
+      setSelectedNodeId(null);
+    },
+    [setEdges, setSelectedNodeId],
+  );
+
   const handleNodesDelete = useCallback(
     (deletedNodes: ServiceNode[]) => {
       if (deletedNodes.some((node) => node.id === selectedNodeId)) {
@@ -161,7 +204,27 @@ export function GraphBuilder() {
     [selectedNodeId, setSelectedNodeId],
   );
 
-  const handleAddNode = useCallback(() => {
+  const handleEdgesDelete = useCallback(
+    (deletedEdges: ServiceEdge[]) => {
+      if (deletedEdges.some((edge) => edge.id === selectedEdgeId)) {
+        setSelectedEdgeId(null);
+      }
+    },
+    [selectedEdgeId],
+  );
+
+  const handleDeleteSelectedEdge = useCallback(() => {
+    if (!selectedEdgeId) {
+      return;
+    }
+
+    setEdges((currentEdges) =>
+      currentEdges.filter((edge) => edge.id !== selectedEdgeId),
+    );
+    setSelectedEdgeId(null);
+  }, [selectedEdgeId, setEdges]);
+
+  const handleAddNode = useCallback((data: ServiceNodeData) => {
     const id = `service-${Date.now()}`;
     const newNode: ServiceNode = {
       id,
@@ -170,10 +233,7 @@ export function GraphBuilder() {
         x: 160 + nodes.length * 52,
         y: 140 + (nodes.length % 3) * 112,
       },
-      data: {
-        ...newNodeDefaults,
-        name: `Service ${nodes.length + 1}`,
-      },
+      data,
     };
 
     setNodes((currentNodes) => [...currentNodes, newNode]);
@@ -217,8 +277,12 @@ export function GraphBuilder() {
 
   const panel = (
     <RightPanel
+      nodes={nodes}
       selectedNode={selectedNode}
+      selectedEdge={selectedEdge}
       onUpdateNode={handleUpdateSelectedNode}
+      onUpdateEdge={handleUpdateSelectedEdge}
+      onDeleteEdge={handleDeleteSelectedEdge}
     />
   );
 
@@ -231,7 +295,7 @@ export function GraphBuilder() {
         appsError={appsQuery.isError}
         appsErrorMessage={appsErrorMessage}
         simulateApiError={simulateApiError}
-        onAddNode={handleAddNode}
+        onAddNode={() => setAddNodeDialogOpen(true)}
         onFitView={handleFitView}
         onOpenMobilePanel={() => setMobilePanelOpen(true)}
         onRetryApps={() => void appsQuery.refetch()}
@@ -251,9 +315,11 @@ export function GraphBuilder() {
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={handleConnect}
+            onReconnect={handleReconnect}
             onInit={setReactFlowInstance}
-            onNodeSelect={handleNodeSelect}
+            onSelectionChange={handleSelectionChange}
             onNodesDelete={handleNodesDelete}
+            onEdgesDelete={handleEdgesDelete}
             onRetry={() => void graphQuery.refetch()}
           />
         </main>
@@ -261,6 +327,13 @@ export function GraphBuilder() {
           {panel}
         </aside>
       </div>
+
+      <AddNodeDialog
+        open={isAddNodeDialogOpen}
+        defaultName={`Service ${nodes.length + 1}`}
+        onOpenChange={setAddNodeDialogOpen}
+        onCreateNode={handleAddNode}
+      />
 
       <Sheet open={isMobilePanelOpen} onOpenChange={setMobilePanelOpen}>
         <SheetContent className="w-[min(92vw,24rem)] p-0">
