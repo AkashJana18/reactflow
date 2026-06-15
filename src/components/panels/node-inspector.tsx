@@ -52,17 +52,17 @@ const statusMeta: Record<
   Healthy: {
     icon: CheckCircle2,
     badge: "healthy",
-    className: "text-emerald-300",
+    className: "text-emerald-700 dark:text-emerald-300",
   },
   Degraded: {
     icon: AlertTriangle,
     badge: "degraded",
-    className: "text-amber-200",
+    className: "text-amber-700 dark:text-amber-200",
   },
   Down: {
     icon: CircleOff,
     badge: "down",
-    className: "text-red-300",
+    className: "text-red-700 dark:text-red-300",
   },
 };
 

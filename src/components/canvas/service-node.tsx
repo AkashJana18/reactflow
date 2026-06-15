@@ -207,7 +207,7 @@ function ServiceNodeComponent({ id, data, selected }: NodeProps<ServiceNode>) {
         <Badge variant={statusBadge[data.status]} className="shrink-0">
           ${data.costPerHour.toFixed(2)}/HR
         </Badge>
-        <span className="text-sm font-semibold text-amber-400">
+        <span className="text-sm font-semibold text-amber-700 dark:text-amber-400">
           {data.provider}
         </span>
       </div>

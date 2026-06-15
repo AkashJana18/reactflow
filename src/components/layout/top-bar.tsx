@@ -1,12 +1,15 @@
 import {
   Bug,
   Maximize2,
+  Moon,
   PanelRightOpen,
   Plus,
   Share2,
+  Sun,
 } from "lucide-react";
 import { ApplicationMenu } from "@/components/layout/application-menu";
 import { Button } from "@/components/ui/button";
+import type { ThemeMode } from "@/hooks/use-theme";
 import type { AppSummary } from "@/types";
 
 type TopBarProps = {
@@ -16,12 +19,14 @@ type TopBarProps = {
   appsError: boolean;
   appsErrorMessage?: string;
   simulateApiError: boolean;
+  theme: ThemeMode;
   onAddNode: () => void;
   onFitView: () => void;
   onOpenMobilePanel: () => void;
   onRetryApps: () => void;
   onSelectApp: (appId: string) => void;
   onToggleApiError: () => void;
+  onToggleTheme: () => void;
 };
 
 export function TopBar({
@@ -31,13 +36,17 @@ export function TopBar({
   appsError,
   appsErrorMessage,
   simulateApiError,
+  theme,
   onAddNode,
   onFitView,
   onOpenMobilePanel,
   onRetryApps,
   onSelectApp,
   onToggleApiError,
+  onToggleTheme,
 }: TopBarProps) {
+  const isLightTheme = theme === "light";
+
   return (
     <header className="relative z-40 flex h-20 w-full min-w-0 shrink-0 items-center justify-between border-b border-border bg-background/95 px-3 backdrop-blur md:px-4">
       <ApplicationMenu
@@ -84,6 +93,22 @@ export function TopBar({
           onClick={onToggleApiError}
         >
           <Bug aria-hidden="true" />
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="hidden sm:inline-flex"
+          aria-label={isLightTheme ? "Switch to dark mode" : "Switch to light mode"}
+          title={isLightTheme ? "Dark mode" : "Light mode"}
+          aria-pressed={isLightTheme}
+          onClick={onToggleTheme}
+        >
+          {isLightTheme ? (
+            <Moon aria-hidden="true" />
+          ) : (
+            <Sun aria-hidden="true" />
+          )}
         </Button>
         <Button
           type="button"

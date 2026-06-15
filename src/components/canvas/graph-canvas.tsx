@@ -3,7 +3,7 @@ import {
   Background,
   BackgroundVariant,
   Controls,
-  MiniMap,
+  //MiniMap,
   ReactFlow,
   useReactFlow,
   type NodeTypes,
@@ -91,7 +91,7 @@ export function GraphCanvas({
         onEdgesDelete={onEdgesDelete}
         deleteKeyCode={["Backspace", "Delete"]}
         edgesReconnectable
-        reconnectRadius={12}
+        reconnectRadius={1}
         fitView
         fitViewOptions={{ padding: 0.2 }}
         minZoom={0.35}
@@ -103,17 +103,17 @@ export function GraphCanvas({
         <Background
           variant={BackgroundVariant.Dots}
           gap={24}
-          size={1.3}
-          color="rgba(148, 163, 184, 0.22)"
+          size={2}
+          color="hsl(var(--flow-grid-dot) / 0.55)"
         />
         <Controls position="bottom-left" showInteractive={false} />
-        <MiniMap
+        {/* <MiniMap
           className="hidden overflow-hidden rounded-md border border-border md:block"
           pannable
           zoomable
           nodeColor={() => "hsl(var(--primary))"}
-          maskColor="rgba(2, 6, 23, 0.65)"
-        />
+          maskColor="hsl(var(--flow-minimap-mask) / 0.62)"
+        /> */}
       </ReactFlow>
 
       {isLoading ? <GraphLoading /> : null}

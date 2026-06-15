@@ -4,6 +4,34 @@
 
 @layer base {
   :root {
+    --background: 210 30% 98%;
+    --foreground: 222 26% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 26% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 26% 12%;
+    --primary: 222 82% 56%;
+    --primary-foreground: 210 24% 98%;
+    --secondary: 216 28% 92%;
+    --secondary-foreground: 222 26% 18%;
+    --muted: 214 32% 93%;
+    --muted-foreground: 217 13% 40%;
+    --accent: 168 74% 36%;
+    --accent-foreground: 210 24% 98%;
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 210 24% 98%;
+    --border: 215 25% 84%;
+    --input: 215 25% 84%;
+    --ring: 222 84% 58%;
+    --flow-grid-dot: 215 18% 68%;
+    --flow-grid-start: 214 38% 97%;
+    --flow-grid-end: 210 36% 94%;
+    --flow-edge: 215 17% 50%;
+    --flow-minimap-mask: 215 35% 91%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
     --background: 220 18% 7%;
     --foreground: 210 24% 96%;
     --card: 222 18% 9%;
@@ -23,7 +51,11 @@
     --border: 220 12% 20%;
     --input: 220 12% 20%;
     --ring: 222 88% 67%;
-    --radius: 0.5rem;
+    --flow-grid-dot: 217 16% 76%;
+    --flow-grid-start: 215 28% 12%;
+    --flow-grid-end: 222 84% 5%;
+    --flow-edge: 217 16% 67%;
+    --flow-minimap-mask: 222 84% 5%;
   }
 
   * {
@@ -53,8 +85,16 @@
 @layer components {
   .flow-grid {
     background:
-      radial-gradient(circle, rgba(148, 163, 184, 0.14) 1px, transparent 1px),
-      linear-gradient(180deg, rgba(15, 23, 42, 0.38), rgba(2, 6, 23, 0.55));
+      radial-gradient(
+        circle,
+        hsl(var(--flow-grid-dot) / 0.28) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        180deg,
+        hsl(var(--flow-grid-start) / 0.82),
+        hsl(var(--flow-grid-end) / 0.94)
+      );
     background-size:
       24px 24px,
       100% 100%;
@@ -62,7 +102,7 @@
 }
 
 .react-flow {
-  --xy-edge-stroke-default: rgba(148, 163, 184, 0.44);
+  --xy-edge-stroke-default: hsl(var(--flow-edge) / 0.48);
   --xy-edge-stroke-width-default: 2;
   --xy-node-border-default: transparent;
   --xy-controls-button-background-color-default: hsl(var(--card));

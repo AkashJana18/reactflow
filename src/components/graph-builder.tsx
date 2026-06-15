@@ -15,6 +15,7 @@ import { RightPanel } from "@/components/panels/right-panel";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useAppGraph } from "@/hooks/use-app-graph";
 import { useApps } from "@/hooks/use-apps";
+import { useTheme } from "@/hooks/use-theme";
 import { useGraphBuilderStore } from "@/store/use-graph-builder-store";
 import type { ServiceEdge, ServiceNode, ServiceNodeData } from "@/types";
 
@@ -52,6 +53,7 @@ export function GraphBuilder() {
   const [isAddNodeDialogOpen, setAddNodeDialogOpen] = useState(false);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const loadedAppId = useRef<string | null>(null);
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     if (!selectedAppId && appsQuery.data?.[0]) {
@@ -295,12 +297,14 @@ export function GraphBuilder() {
         appsError={appsQuery.isError}
         appsErrorMessage={appsErrorMessage}
         simulateApiError={simulateApiError}
+        theme={theme}
         onAddNode={() => setAddNodeDialogOpen(true)}
         onFitView={handleFitView}
         onOpenMobilePanel={() => setMobilePanelOpen(true)}
         onRetryApps={() => void appsQuery.refetch()}
         onSelectApp={setSelectedAppId}
         onToggleApiError={toggleApiError}
+        onToggleTheme={toggleTheme}
       />
 
       <div className="flex min-h-0 flex-1">
