@@ -217,12 +217,7 @@ export function GraphBuilder() {
 
   const panel = (
     <RightPanel
-      apps={appsQuery.data}
-      appsLoading={appsQuery.isLoading}
-      appsError={appsQuery.isError}
-      appsErrorMessage={appsErrorMessage}
       selectedNode={selectedNode}
-      onRetryApps={() => void appsQuery.refetch()}
       onUpdateNode={handleUpdateSelectedNode}
     />
   );
@@ -230,17 +225,23 @@ export function GraphBuilder() {
   return (
     <div className="flex h-screen w-screen min-w-0 flex-col overflow-hidden bg-background text-foreground">
       <TopBar
+        apps={appsQuery.data}
         selectedApp={selectedApp}
+        appsLoading={appsQuery.isLoading}
+        appsError={appsQuery.isError}
+        appsErrorMessage={appsErrorMessage}
         simulateApiError={simulateApiError}
         onAddNode={handleAddNode}
         onFitView={handleFitView}
         onOpenMobilePanel={() => setMobilePanelOpen(true)}
+        onRetryApps={() => void appsQuery.refetch()}
+        onSelectApp={setSelectedAppId}
         onToggleApiError={toggleApiError}
       />
 
       <div className="flex min-h-0 flex-1">
-        <LeftRail />
-        <main className="min-w-0 flex-1">
+        <main className="relative min-w-0 flex-1">
+          <LeftRail />
           <GraphCanvas
             nodes={nodes}
             edges={edges}
@@ -264,7 +265,7 @@ export function GraphBuilder() {
       <Sheet open={isMobilePanelOpen} onOpenChange={setMobilePanelOpen}>
         <SheetContent className="w-[min(92vw,24rem)] p-0">
           <SheetHeader className="sr-only">
-            <SheetTitle>Application panel</SheetTitle>
+            <SheetTitle>Node inspector</SheetTitle>
           </SheetHeader>
           {panel}
         </SheetContent>
