@@ -1,9 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Background,
   BackgroundVariant,
+  ControlButton,
   Controls,
-  //MiniMap,
+  MiniMap,
   ReactFlow,
   useReactFlow,
   type NodeTypes,
@@ -14,7 +15,7 @@ import {
   type OnReconnect,
   type ReactFlowInstance,
 } from "@xyflow/react";
-import { RefreshCw } from "lucide-react";
+import { Map, RefreshCw } from "lucide-react";
 import { ServiceNodeCard } from "@/components/canvas/service-node";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -58,6 +59,7 @@ export function GraphCanvas({
   onRetry,
 }: GraphCanvasProps) {
   const reactFlow = useReactFlow<ServiceNode, ServiceEdge>();
+  const [isMiniMapVisible, setMiniMapVisible] = useState(false);
 
   useEffect(() => {
     if (nodes.length > 0 && !isLoading && !isError) {
@@ -100,20 +102,32 @@ export function GraphCanvas({
         selectionOnDrag
         onlyRenderVisibleElements
       >
-        <Background
+        {/* <Background
           variant={BackgroundVariant.Dots}
           gap={24}
           size={2}
           color="hsl(var(--flow-grid-dot) / 0.55)"
-        />
-        <Controls position="bottom-left" showInteractive={false} />
-        {/* <MiniMap
-          className="hidden overflow-hidden rounded-md border border-border md:block"
-          pannable
-          zoomable
-          nodeColor={() => "hsl(var(--primary))"}
-          maskColor="hsl(var(--flow-minimap-mask) / 0.62)"
         /> */}
+        <Controls position="bottom-left" showInteractive={false}>
+          <ControlButton
+            type="button"
+            aria-label={isMiniMapVisible ? "Hide minimap" : "Show minimap"}
+            aria-pressed={isMiniMapVisible}
+            title={isMiniMapVisible ? "Hide minimap" : "Show minimap"}
+            onClick={() => setMiniMapVisible((isVisible) => !isVisible)}
+          >
+            <Map className="size-4" aria-hidden="true" />
+          </ControlButton>
+        </Controls>
+        {isMiniMapVisible ? (
+          <MiniMap
+            className="overflow-hidden rounded-md border border-border"
+            pannable
+            zoomable
+            nodeColor={() => "hsl(var(--primary))"}
+            maskColor="hsl(var(--flow-minimap-mask) / 0.62)"
+          />
+        ) : null}
       </ReactFlow>
 
       {isLoading ? <GraphLoading /> : null}

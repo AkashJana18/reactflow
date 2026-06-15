@@ -13,7 +13,7 @@ import {
   Settings,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { useId, useState } from "react";
+import { useId } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,8 +23,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { clamp, cn } from "@/lib/utils";
 import {
-  getResourceDefinition,
   parseResourceInput,
+  type ResourceDefinition,
   resourceDefinitions,
   type ResourceMetric,
 } from "@/lib/service-resources";
@@ -230,9 +230,28 @@ type ResourceEditorProps = {
 };
 
 function ResourceEditor({ data, onUpdateNode }: ResourceEditorProps) {
+  return (
+    <div className="space-y-3 rounded-md border border-border bg-muted/20 p-3">
+      {resourceDefinitions.map((definition) => (
+        <ResourceRow
+          key={definition.key}
+          definition={definition}
+          data={data}
+          onUpdateNode={onUpdateNode}
+        />
+      ))}
+    </div>
+  );
+}
+
+type ResourceRowProps = {
+  definition: ResourceDefinition;
+  data: ServiceNodeData;
+  onUpdateNode: (patch: Partial<ServiceNodeData>) => void;
+};
+
+function ResourceRow({ definition, data, onUpdateNode }: ResourceRowProps) {
   const inputId = useId();
-  const [activeMetric, setActiveMetric] = useState<ResourceMetric>("cpu");
-  const definition = getResourceDefinition(activeMetric);
   const currentValue = definition.getValue(data);
   const inputMode = definition.step < 1 ? "decimal" : "numeric";
   const Icon = resourceIcons[definition.key];
@@ -242,66 +261,37 @@ function ResourceEditor({ data, onUpdateNode }: ResourceEditorProps) {
   }
 
   return (
-    <div className="rounded-md border border-border bg-muted/20 p-3">
-      <Tabs
-        value={activeMetric}
-        onValueChange={(value) => setActiveMetric(value as ResourceMetric)}
-      >
-        <TabsList className="grid h-auto w-full grid-cols-4 gap-2 bg-transparent p-0">
-          {resourceDefinitions.map((resource) => {
-            const ResourceIcon = resourceIcons[resource.key];
-
-            return (
-              <TabsTrigger
-                key={resource.key}
-                value={resource.key}
-                className="h-14 min-w-0 gap-1 rounded-md bg-muted px-1 text-xs data-[state=active]:bg-background"
-              >
-                <ResourceIcon
-                  className="size-4 shrink-0 text-muted-foreground"
-                  aria-hidden="true"
-                />
-                <span className="truncate">{resource.label}</span>
-              </TabsTrigger>
-            );
-          })}
-        </TabsList>
-
-        <div className="mt-4">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <Label htmlFor={inputId} className="flex items-center gap-2">
-              <Icon className="size-4 text-muted-foreground" aria-hidden="true" />
-              {definition.inputLabel}
-            </Label>
-            <span className="text-xs text-muted-foreground">
-              {definition.min}-{definition.max}
-            </span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Slider
-              value={[clamp(currentValue, definition.min, definition.max)]}
-              min={definition.min}
-              max={definition.max}
-              step={definition.step}
-              onValueChange={([value]) => updateMetric(value)}
-              aria-label={definition.inputLabel}
-            />
-            <Input
-              id={inputId}
-              className="w-24 shrink-0 text-right"
-              type="text"
-              inputMode={inputMode}
-              value={currentValue}
-              onChange={(event) =>
-                updateMetric(parseResourceInput(event.target.value, definition))
-              }
-            />
-          </div>
-          <p className="mt-2 text-xs text-muted-foreground">
-            Current {definition.label}: {definition.formatValue(currentValue)}
-          </p>
-        </div>
-      </Tabs>
+    <div className="grid grid-cols-[5.5rem_minmax(0,1fr)_4.75rem] items-center gap-3 rounded-md border border-border bg-background/70 px-3 py-2">
+      <div className="min-w-0">
+        <Label
+          htmlFor={inputId}
+          className="flex min-w-0 items-center gap-2 text-sm font-medium"
+        >
+          <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+          <span className="truncate">{definition.label}</span>
+        </Label>
+        <span className="mt-0.5 block pl-6 text-[0.68rem] leading-none text-muted-foreground">
+          {definition.min}-{definition.max}
+        </span>
+      </div>
+      <Slider
+        value={[clamp(currentValue, definition.min, definition.max)]}
+        min={definition.min}
+        max={definition.max}
+        step={definition.step}
+        onValueChange={([value]) => updateMetric(value)}
+        aria-label={definition.inputLabel}
+      />
+      <Input
+        id={inputId}
+        className="h-9 text-right"
+        type="text"
+        inputMode={inputMode}
+        value={currentValue}
+        onChange={(event) =>
+          updateMetric(parseResourceInput(event.target.value, definition))
+        }
+      />
     </div>
   );
 }

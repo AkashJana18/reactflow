@@ -112,6 +112,16 @@
   --xy-minimap-background-color-default: hsl(var(--card));
 }
 
+.react-flow__controls-button[aria-pressed="true"] {
+  background: hsl(var(--muted));
+  color: hsl(var(--primary));
+}
+
+.react-flow__controls-button:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
 .react-flow__pane {
   cursor: grab;
 }
