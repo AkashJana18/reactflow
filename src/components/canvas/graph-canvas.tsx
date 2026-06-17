@@ -36,7 +36,11 @@ type GraphCanvasProps = {
   onConnect: OnConnect;
   onReconnect: OnReconnect<ServiceEdge>;
   onInit: (instance: ReactFlowInstance<ServiceNode, ServiceEdge>) => void;
-  onSelectionChange: (nodeId: string | null, edgeId: string | null) => void;
+  onSelectionChange: (
+    nodeId: string | null,
+    edgeId: string | null,
+    openMobilePanel?: boolean,
+  ) => void;
   onNodesDelete: (nodes: ServiceNode[]) => void;
   onEdgesDelete: OnEdgesDelete<ServiceEdge>;
   onRetry: () => void;
@@ -80,8 +84,8 @@ export function GraphCanvas({
         onConnect={onConnect}
         onReconnect={onReconnect}
         onInit={onInit}
-        onNodeClick={(_, node) => onSelectionChange(node.id, null)}
-        onEdgeClick={(_, edge) => onSelectionChange(null, edge.id)}
+        onNodeClick={(_, node) => onSelectionChange(node.id, null, true)}
+        onEdgeClick={(_, edge) => onSelectionChange(null, edge.id, true)}
         onPaneClick={() => onSelectionChange(null, null)}
         onSelectionChange={({ nodes: selectedNodes, edges: selectedEdges }) =>
           onSelectionChange(
@@ -102,12 +106,12 @@ export function GraphCanvas({
         selectionOnDrag
         onlyRenderVisibleElements
       >
-        {/* <Background
+        <Background
           variant={BackgroundVariant.Dots}
           gap={24}
           size={2}
           color="hsl(var(--flow-grid-dot) / 0.55)"
-        /> */}
+        />
         <Controls position="bottom-left" showInteractive={false}>
           <ControlButton
             type="button"

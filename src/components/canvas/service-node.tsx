@@ -189,12 +189,12 @@ function ServiceNodeComponent({ id, data, selected }: NodeProps<ServiceNode>) {
 
       <div className="mt-4 flex items-center gap-3">
         <div
-          className="h-2 flex-1 rounded-full bg-gradient-to-r from-primary via-accent to-destructive"
+          className="h-2 flex-1 overflow-hidden rounded-full bg-muted"
           aria-hidden="true"
         >
           <div
-            className="h-2 rounded-full bg-background/20"
-            style={{ marginLeft: `${activePercent}%` }}
+            className="h-full rounded-full bg-gradient-to-r from-primary via-accent to-destructive transition-[width] duration-200 motion-reduce:transition-none"
+            style={{ width: `${activePercent}%` }}
           />
         </div>
         <div className="min-w-12 rounded-md border border-border bg-background px-2 py-1 text-right text-xs">

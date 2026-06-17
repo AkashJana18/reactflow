@@ -119,10 +119,14 @@ export function GraphBuilder() {
   );
 
   const handleSelectionChange = useCallback(
-    (nodeId: string | null, edgeId: string | null) => {
+    (
+      nodeId: string | null,
+      edgeId: string | null,
+      openMobilePanel = false,
+    ) => {
       setSelectedNodeId(nodeId);
       setSelectedEdgeId(nodeId ? null : edgeId);
-      if ((nodeId || edgeId) && isMobileViewport()) {
+      if (openMobilePanel && (nodeId || edgeId) && isMobileViewport()) {
         setMobilePanelOpen(true);
       }
     },

@@ -145,7 +145,7 @@ export function ApplicationMenu({
     <div ref={rootRef} className={cn("relative min-w-0", className)}>
       <button
         type="button"
-        className="flex h-14 w-full min-w-0 items-center gap-3 rounded-md border border-border bg-card/90 px-2 text-left shadow-panel transition-colors hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className="flex h-14 w-full min-w-0 items-center gap-3 rounded-md border border-border bg-card/90 px-2 text-left transition-colors hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         aria-haspopup="dialog"
         aria-expanded={isOpen}
         aria-controls={isOpen ? menuId : undefined}
@@ -167,7 +167,10 @@ export function ApplicationMenu({
           </span>
         </span>
         {isOpen ? (
-          <ChevronUp className="size-5 shrink-0 text-foreground" aria-hidden="true" />
+          <ChevronUp
+            className="size-5 shrink-0 text-foreground"
+            aria-hidden="true"
+          />
         ) : (
           <ChevronDown
             className="size-5 shrink-0 text-muted-foreground"
@@ -260,7 +263,10 @@ export function ApplicationMenu({
               </div>
             ) : null}
 
-            {!isLoading && !isError && apps?.length && filteredApps.length === 0 ? (
+            {!isLoading &&
+            !isError &&
+            apps?.length &&
+            filteredApps.length === 0 ? (
               <div className="rounded-md border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
                 No applications match "{query}".
               </div>
@@ -319,10 +325,12 @@ function getAppVisual(app?: AppSummary): AppVisual {
     return fallbackVisual;
   }
 
-  return appVisuals[app.id] ?? {
-    icon: fallbackVisual.icon,
-    className: `${app.accent} text-white`,
-  };
+  return (
+    appVisuals[app.id] ?? {
+      icon: fallbackVisual.icon,
+      className: `${app.accent} text-white`,
+    }
+  );
 }
 
 function LogoMark() {
